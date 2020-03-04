@@ -36,27 +36,87 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
+#define LED 2
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "Your token here";
+char auth[] = "Xx5Y7Yfq7jL4GQiagXwllcPaQtcWbttT";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
 // The EE IOT network is hidden. You might not be able to see it.
 // But you should be able to connect with these credentials. 
-char ssid[32] = "EE-IOT-Platform-02";
-char pass[32] = "g!TyA>hR2JTy";
+char ssid[32] = "Mohammad";
+char pass[32] = "qpzm1964";
+
+const int freq = 5000;     // 5KHz frequency is more than enough. Remember we used 100 before.
+const int ledChannel = 0;  // You can have up to 16 pwm channels (0 to 15)
+const int resolution = 10; // 10 bit resolution for 1023. Freq should be greater than resolution.
+int LEDstate = 0;
+int LEDduty = 0;
+BlynkTimer timer;
+int time_count = 0; // timer counter global variable
+String content = "";  // null string constant ( an empty string )
+
+
+void myTimerEvent()
+{
+    if (time_count % 25 == 0) { // every 250 ms
+        // Do thing that needs to happen every 0.25 seconds
+    }
+    if (time_count == 100){
+        // Do thing that needs to happen every 1 second
+        Blynk.virtualWrite(V3, millis() / 1000);
+        time_count = 0; // reset time counter
+    }
+    else {
+        // Send serial data to Blynk terminal
+        char character;
+        while(Serial.available()) { // Check if serial is available every 10 ms
+            character = Serial.read();
+            content.concat(character);
+        }
+        if (content != "") {
+            Blynk.virtualWrite(V0, content);
+            content = ""; // Clear String
+        }  
+    }
+    time_count += 1; // Increment on every tick
+}
+
 
 void setup()
 {
   // Serial Monitor
   Serial.begin(115200);
   Blynk.begin(auth, ssid, pass);
+
+  timer.setInterval(10L, myTimerEvent);
+  pinMode(LED, OUTPUT);
+  ledcSetup(ledChannel, freq, resolution);
+  ledcAttachPin(LED, ledChannel);
 }
 
 void loop()
 {
   Blynk.run();
+  timer.run();
 }
 
+BLYNK_WRITE(V1)
+{
+
+    // param is a member variable of the Blynk ADT. It is exposed so you can read it.
+    LEDstate = param.asInt(); // assigning incoming value from pin V1 to a variable
+    if(LEDstate == 0){
+    ledcWrite(ledChannel, 0);
+    }else{
+    ledcWrite(ledChannel, LEDduty);
+    }
+}
+
+BLYNK_WRITE(V2)
+{
+    // param is a member variable of the Blynk ADT. It is exposed so you can read it.
+    LEDduty = param.asInt(); // assigning incoming value from pin V1 to a variable
+}
