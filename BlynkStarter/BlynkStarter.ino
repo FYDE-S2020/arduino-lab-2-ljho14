@@ -61,9 +61,6 @@ String content = "";  // null string constant ( an empty string )
 
 void myTimerEvent()
 {
-    if (time_count % 25 == 0) { // every 250 ms
-        // Do thing that needs to happen every 0.25 seconds
-    }
     if (time_count == 100){
         // Do thing that needs to happen every 1 second
         Blynk.virtualWrite(V3, millis() / 1000);
